@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Life Paths: Pregnancy Decision Simulator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #f7f1ff, #eef7ff);
+      color: #222;
+    }
+    header {
+      background: #4b3f72;
+      color: white;
+      padding: 24px;
+      text-align: center;
+    }
+    main {
+      max-width: 1000px;
+      margin: auto;
+      padding: 24px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin: 18px 0;
+      box-shadow: 0 4px 18px rgba(0,0,0,.12);
+    }
+    h1, h2, h3 { margin-top: 0; }
+    button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #4b3f72;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      text-align: left;
+    }
+    button:hover { background: #372d57; }
+    .secondary { background: #607d8b; }
+    .secondary:hover { background: #455a64; }
+    .danger { background: #8e3b46; }
+    .danger:hover { background: #6d2f38; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .score {
+      background: #f3f5ff;
+      border-left: 6px solid #4b3f72;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+    textarea { min-height: 90px; }
+    .hidden { display: none; }
+    .small { font-size: 14px; color: #555; }
+    .timer {
+      background: #fff4d6;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    .choice-note {
+      background: #eef7f0;
+      border-left: 5px solid #3c8d5a;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      color: #555;
+    }
+    @media print {
+      button, .no-print { display: none; }
+      body { background: white; }
+      .card { box-shadow: none; border: 1px solid #ccc; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Life Paths: Pregnancy Decision Simulator</h1>
+    <p>A 40-minute decision-making game about school, work, family, support, money, and parenting responsibilities.</p>
+  </header>
+
+  <main>
+    <section id="setup" class="card">
+      <h2>Student Setup</h2>
+      <p>This simulator is designed for classroom discussion. It does not tell students what choice to make. It helps students think through real-life consequences, responsibilities, support systems, and long-term planning.</p>
+      <label>Student Name</label>
+      <input id="studentName" placeholder="Type your name" />
+      <label>Choose a starting life situation</label>
+      <select id="profile">
+        <option value="student">17-year-old high school student with a part-time job</option>
+        <option value="college">19-year-old college student living away from home</option>
+        <option value="worker">22-year-old full-time worker paying rent</option>
+        <option value="limitedSupport">18-year-old with limited family support</option>
+        <option value="stablePartner">20-year-old in a stable relationship with some support</option>
+      </select>
+      <button onclick="startGame()">Start Simulator</button>
+    </section>
+
+    <section id="game" class="card hidden">
+      <div class="timer">Suggested pace: 5 min intro, 25 min choices, 5 min outcome, 5 min reflection.</div>
+      <h2 id="roundTitle"></h2>
+      <p id="scenarioText"></p>
+      <div id="choices"></div>
+      <div class="choice-note" id="feedbackBox"></div>
+      <div class="grid">
+        <div class="score">Money: <span id="moneyScore">50</span></div>
+        <div class="score">Well-being: <span id="wellScore">50</span></div>
+        <div class="score">Education/Career: <span id="eduScore">50</span></div>
+        <div class="score">Support: <span id="supportScore">50</span></div>
+      </div>
+    </section>
+
+    <section id="result" class="card hidden">
+      <h2>Final Life Path Summary</h2>
+      <p id="summaryText"></p>
+      <div class="grid">
+        <div class="score">Money: <span id="finalMoney"></span></div>
+        <div class="score">Well-being: <span id="finalWell"></span></div>
+        <div class="score">Education/Career: <span id="finalEdu"></span></div>
+        <div class="score">Support: <span id="finalSupport"></span></div>
+      </div>
+      <h3>Reflection Questions</h3>
+      <label>1. What was the hardest decision you made?</label>
+      <textarea></textarea>
+      <label>2. How did money affect your choices?</label>
+      <textarea></textarea>
+      <label>3. How did support from family, school, partner, or community affect the outcome?</label>
+      <textarea></textarea>
+      <label>4. What resources would help a young parent stay in school or keep working?</label>
+      <textarea></textarea>
+      <label>5. What did this simulation teach you about long-term decision-making?</label>
+      <textarea></textarea>
+      <button onclick="window.print()" class="secondary">Print or Save as PDF</button>
+      <button onclick="restartGame()">Restart Simulator</button>
+    </section>
+  </main>
+
+  <footer>
+    Classroom note: This simulator should be used with respectful discussion norms and local school health curriculum guidelines.
+  </footer>
+
+<script>
+let state = {
+  name: '',
+  profile: '',
+  money: 50,
+  well: 50,
+  edu: 50,
+  support: 50,
+  round: 0,
+  path: [],
+  singleParent: false,
+  parenting: false,
+  adoption: false,
+  coparent: false
+};
+
+const rounds = [
+  {
+    title: 'Round 1: Discovery',
+    text: 'You find out there is a pregnancy. You feel pressure, confusion, and fear. Your first major decision is who to talk to and how to get support.',
+    choices: [
+      { label: 'Tell a trusted adult or parent/guardian right away.', money: 0, well: 8, edu: 3, support: 12, note: 'You may face an uncomfortable conversation, but support increases and you are less alone.' },
+      { label: 'Tell only your partner first.', money: 0, well: -2, edu: 0, support: 4, note: 'This may help if the relationship is healthy, but one person may not be enough support.' },
+      { label: 'Keep it secret for now.', money: 0, well: -12, edu: -3, support: -10, note: 'Keeping it secret may delay help, increase stress, and make planning harder.' }
+    ]
+  },
+  {
+    title: 'Round 2: Decision Point',
+    text: 'You need to think about school, family, money, medical appointments, work, and what kind of support exists. Choose a life path for the simulation.',
+    choices: [
+      { label: 'Continue pregnancy and parent as a single parent.', money: -10, well: -6, edu: -5, support: -2, set: 'singleParent', note: 'Single parenting is possible, but it often requires strong planning, childcare, income, and support.' },
+      { label: 'Continue pregnancy and co-parent with partner.', money: -5, well: 0, edu: -3, support: 6, set: 'coparent', note: 'Co-parenting can help if both people are responsible, but communication and reliability matter.' },
+      { label: 'Make an adoption plan after counseling and trusted adult support.', money: -2, well: -4, edu: 3, support: 5, set: 'adoption', note: 'Adoption planning involves emotional decisions, legal steps, counseling, and support.' },
+      { label: 'Continue school/work planning while seeking health and counseling resources.', money: -3, well: 6, edu: 6, support: 8, set: 'planning', note: 'Getting accurate information and support helps with decision-making and future planning.' }
+    ]
+  },
+  {
+    title: 'Round 3: School and Work Pressure',
+    text: 'Appointments, fatigue, stress, and family conversations begin affecting your daily life. You need a plan to stay on track.',
+    choices: [
+      { label: 'Meet with school counselor and create a graduation/work plan.', money: 0, well: 6, edu: 12, support: 8, note: 'Planning with school staff increases the chance of staying on track.' },
+      { label: 'Avoid school staff because you feel embarrassed.', money: 0, well: -8, edu: -12, support: -6, note: 'Avoiding support can make attendance, credits, and stress worse.' },
+      { label: 'Work more hours to save money, even if school suffers.', money: 12, well: -6, edu: -10, support: -2, note: 'More income helps short-term, but school progress may fall behind.' },
+      { label: 'Cut work hours and focus on school and health.', money: -10, well: 7, edu: 8, support: 3, note: 'This protects school and health, but money becomes tighter.' }
+    ]
+  },
+  {
+    title: 'Round 4: Childcare and Daily Responsibility',
+    text: 'Childcare becomes a major issue. Missing school or work can affect money, grades, attendance, and relationships.',
+    choices: [
+      { label: 'Ask family or trusted adults to help with childcare.', money: 4, well: 4, edu: 6, support: 10, note: 'A reliable support system makes school and work more manageable.' },
+      { label: 'Pay for daycare or childcare.', money: -15, well: 2, edu: 8, support: 0, note: 'Childcare can protect school/work time, but it is expensive.' },
+      { label: 'Skip school or work when childcare falls through.', money: -8, well: -8, edu: -12, support: -4, note: 'Missing school or work can create a cycle of falling behind.' },
+      { label: 'Trade childcare with another young parent.', money: 5, well: -1, edu: 4, support: 6, note: 'Shared support can help, but reliability and safety must be considered.' }
+    ]
+  },
+  {
+    title: 'Round 5: Housing and Food',
+    text: 'Living expenses increase. You need to think about rent, transportation, food, diapers, appointments, and safety.',
+    choices: [
+      { label: 'Apply for community support services and food assistance.', money: 10, well: 5, edu: 2, support: 8, note: 'Using community resources can reduce crisis pressure.' },
+      { label: 'Move in with family temporarily.', money: 12, well: 0, edu: 4, support: 6, note: 'This saves money, but may create family stress or less independence.' },
+      { label: 'Stay independent and work extra hours.', money: 6, well: -10, edu: -8, support: -4, note: 'Independence can feel empowering, but burnout risk rises.' },
+      { label: 'Ignore bills until they become urgent.', money: -12, well: -10, edu: -4, support: -5, note: 'Avoiding bills usually increases stress and limits options later.' }
+    ]
+  },
+  {
+    title: 'Round 6: Relationship and Support Changes',
+    text: 'Relationships change under pressure. Some people step up, some pull away, and some create more stress.',
+    choices: [
+      { label: 'Set clear expectations with partner, family, and school support team.', money: 2, well: 7, edu: 5, support: 10, note: 'Clear communication helps people understand responsibilities.' },
+      { label: 'Depend completely on one person for everything.', money: 0, well: -5, edu: -2, support: -6, note: 'Depending on one person can become risky if that person becomes unavailable.' },
+      { label: 'Join a young parent support group or mentoring program.', money: 3, well: 8, edu: 4, support: 12, note: 'Peer support and mentoring can lower isolation and improve planning.' },
+      { label: 'Cut people off and try to handle everything alone.', money: -2, well: -12, edu: -6, support: -12, note: 'Handling everything alone greatly increases stress.' }
+    ]
+  },
+  {
+    title: 'Round 7: Long-Term Future',
+    text: 'Now you are thinking about the next year: graduation, training, employment, parenting, relationships, and personal goals.',
+    choices: [
+      { label: 'Create a one-year plan: school, childcare, job, transportation, and support.', money: 6, well: 8, edu: 12, support: 8, note: 'A realistic plan improves long-term stability.' },
+      { label: 'Focus only on today and do not plan ahead.', money: -5, well: -8, edu: -8, support: -4, note: 'Without a plan, small problems can become emergencies.' },
+      { label: 'Enroll in career training or credit recovery while arranging childcare.', money: 2, well: 4, edu: 12, support: 5, note: 'Training and credit recovery can improve future options.' },
+      { label: 'Drop school/training completely to work full time.', money: 12, well: -4, edu: -15, support: -2, note: 'Full-time work may help now, but can reduce future earning options.' }
+    ]
+  }
+];
+
+function startGame() {
+  state.name = document.getElementById('studentName').value || 'Student';
+  state.profile = document.getElementById('profile').value;
+  applyProfileStart();
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+  showRound();
+}
+
+function applyProfileStart() {
+  if (state.profile === 'student') { state.edu += 8; state.money -= 5; }
+  if (state.profile === 'college') { state.edu += 5; state.money -= 8; state.support -= 3; }
+  if (state.profile === 'worker') { state.money += 8; state.edu -= 4; }
+  if (state.profile === 'limitedSupport') { state.support -= 12; state.well -= 5; }
+  if (state.profile === 'stablePartner') { state.support += 10; state.well += 4; }
+}
+
+function showRound() {
+  const r = rounds[state.round];
+  document.getElementById('roundTitle').innerText = r.title;
+  document.getElementById('scenarioText').innerText = r.text;
+  document.getElementById('feedbackBox').innerText = 'Choose carefully. Every decision changes your life path scores.';
+  const choices = document.getElementById('choices');
+  choices.innerHTML = '';
+  r.choices.forEach((choice, index) => {
+    const btn = document.createElement('button');
+    btn.innerText = choice.label;
+    btn.onclick = () => makeChoice(choice);
+    choices.appendChild(btn);
+  });
+  updateScores();
+}
+
+function makeChoice(choice) {
+  state.money += choice.money || 0;
+  state.well += choice.well || 0;
+  state.edu += choice.edu || 0;
+  state.support += choice.support || 0;
+  if (choice.set === 'singleParent') { state.singleParent = true; state.parenting = true; }
+  if (choice.set === 'coparent') { state.coparent = true; state.parenting = true; }
+  if (choice.set === 'adoption') { state.adoption = true; }
+  state.path.push(choice.label);
+  clampScores();
+  document.getElementById('feedbackBox').innerText = choice.note;
+  updateScores();
+  setTimeout(() => {
+    state.round++;
+    if (state.round >= rounds.length) showResults();
+    else showRound();
+  }, 1200);
+}
+
+function clampScores() {
+  state.money = Math.max(0, Math.min(100, state.money));
+  state.well = Math.max(0, Math.min(100, state.well));
+  state.edu = Math.max(0, Math.min(100, state.edu));
+  state.support = Math.max(0, Math.min(100, state.support));
+}
+
+function updateScores() {
+  document.getElementById('moneyScore').innerText = state.money;
+  document.getElementById('wellScore').innerText = state.well;
+  document.getElementById('eduScore').innerText = state.edu;
+  document.getElementById('supportScore').innerText = state.support;
+}
+
+function profileText() {
+  const map = {
+    student: '17-year-old high school student with a part-time job',
+    college: '19-year-old college student living away from home',
+    worker: '22-year-old full-time worker paying rent',
+    limitedSupport: '18-year-old with limited family support',
+    stablePartner: '20-year-old in a stable relationship with some support'
+  };
+  return map[state.profile];
+}
+
+function rating(score) {
+  if (score >= 75) return 'Strong';
+  if (score >= 50) return 'Stable but needs support';
+  if (score >= 30) return 'At risk';
+  return 'High concern';
+}
+
+function showResults() {
+  document.getElementById('game').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+  let pathType = 'Planning and support path';
+  if (state.singleParent) pathType = 'Single parent path';
+  if (state.coparent) pathType = 'Co-parenting path';
+  if (state.adoption) pathType = 'Adoption planning path';
+
+  let summary = `${state.name}, your starting profile was: ${profileText()}. Your simulation path was: ${pathType}.\n\n`;
+  summary += `Money: ${rating(state.money)}. Well-being: ${rating(state.well)}. Education/Career: ${rating(state.edu)}. Support: ${rating(state.support)}.\n\n`;
+
+  if (state.money < 40) summary += 'Finances became a major barrier. Childcare, housing, transportation, and food costs affected your choices.\n';
+  if (state.well < 40) summary += 'Stress and emotional well-being became a serious concern. More support and counseling would be important.\n';
+  if (state.edu < 40) summary += 'School or career progress was interrupted. A credit recovery, childcare, or flexible schedule plan would help.\n';
+  if (state.support < 40) summary += 'Your support system was weak. Trusted adults, school staff, mentoring, or community programs could improve the outcome.\n';
+  if (state.money >= 60 && state.well >= 60 && state.edu >= 60 && state.support >= 60) summary += 'You built a strong support plan and protected your long-term goals while handling difficult responsibilities.\n';
+
+  summary += '\nChoices made:\n- ' + state.path.join('\n- ');
+
+  document.getElementById('summaryText').innerText = summary;
+  document.getElementById('finalMoney').innerText = state.money;
+  document.getElementById('finalWell').innerText = state.well;
+  document.getElementById('finalEdu').innerText = state.edu;
+  document.getElementById('finalSupport').innerText = state.support;
+}
+
+function restartGame() {
+  state = { name: '', profile: '', money: 50, well: 50, edu: 50, support: 50, round: 0, path: [], singleParent: false, parenting: false, adoption: false, coparent: false };
+  document.getElementById('studentName').value = '';
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('setup').classList.remove('hidden');
+}
+</script>
+</body>
+</html>
